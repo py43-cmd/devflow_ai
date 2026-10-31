@@ -1,0 +1,38 @@
+# Render Blueprint for the DevFlow AI API.
+# Import this repo in Render → "New Blueprint" and it configures the service.
+# Secrets are marked sync: false, so Render asks for them instead of storing them here.
+
+services:
+  - type: web
+    name: devflow-ai-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+
+      # Set in the Render dashboard after the first deploy
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AI_API_KEY
+        sync: false
+      - key: CLIENT_ORIGINS
+        sync: false
+
+      # Non-secret AI configuration (Google Gemini via the OpenAI-compatible API)
+      - key: AI_PROVIDER
+        value: openai
+      - key: AI_MODEL
+        value: gemini-3.5-flash
+      - key: AI_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai
+      - key: AI_EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: AI_TIMEOUT_MS
+        value: "60000"

@@ -1,8 +1,12 @@
-@theme {
-  --animate-grid-move: grid-move 40s linear infinite;
-  --animate-pulse-slow: pulse-slow 12s ease-in-out infinite;
-  --animate-spin-slow: spin-slow 18s linear infinite;
-}
+/*
+ * Keyframes for the auth screen. AuthLayout uses arbitrary Tailwind
+ * animations such as `animate-[grid-move_36s_linear_infinite]`, which only
+ * need these `@keyframes` to exist in plain CSS.
+ *
+ * Do NOT wrap them in `@theme` here: Tailwind compiles `@theme` only in the
+ * stylesheet that imports "tailwindcss" (index.css). Declaring it in a
+ * secondary stylesheet leaves an unknown `@theme` at-rule in the build.
+ */
 
 @keyframes grid-move {
   0% {

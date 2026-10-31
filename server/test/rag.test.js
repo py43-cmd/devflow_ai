@@ -132,10 +132,21 @@ test("RAG - Embedding Service", async (t) => {
     assert.ok(Math.abs(Math.sqrt(norm) - 1.0) < 0.05);
   });
 
-  await t.test("generateQueryEmbedding produces valid embedding array", async () => {
-    const queryVec = await generateQueryEmbedding("Where is the user login route?");
-    assert.ok(Array.isArray(queryVec));
-    assert.equal(queryVec.length, VECTOR_DIMENSION);
+  await t.test("generateQueryEmbedding produces a valid vector on the offline fallback path", async () => {
+    // Unit tests must stay offline and deterministic. With a real AI key in .env
+    // this call would hit the provider and return its dimension (e.g. 3072), so
+    // the deterministic fallback path is forced by removing the key.
+    const savedKey = process.env.AI_API_KEY;
+    delete process.env.AI_API_KEY;
+
+    try {
+      const queryVec = await generateQueryEmbedding("Where is the user login route?");
+      assert.ok(Array.isArray(queryVec));
+      assert.equal(queryVec.length, VECTOR_DIMENSION);
+      assert.ok(queryVec.every((n) => Number.isFinite(n)));
+    } finally {
+      if (savedKey !== undefined) process.env.AI_API_KEY = savedKey;
+    }
   });
 });
 

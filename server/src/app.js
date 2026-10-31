@@ -14,18 +14,34 @@ const app = express();
 
 app.use(helmet());
 
-// The Vite dev server can be reached as http://localhost:5173 or
-// http://127.0.0.1:5173. The request Origin is echoed back for allowed
-// origins (never for arbitrary origins), so login works from either host.
-const ALLOWED_ORIGINS = new Set([
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-]);
+// Allowed browser origins. Local development works out of the box; deployed
+// frontends are added with a comma-separated CLIENT_ORIGINS variable, for
+// example: CLIENT_ORIGINS=https://devflow-ai.vercel.app
+// A leading wildcard is supported for preview deployments:
+//   https://*.vercel.app
+const DEFAULT_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"];
+
+const parseOrigins = (value) =>
+  (value || "")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+
+const ALLOWED_ORIGINS = new Set([...DEFAULT_ORIGINS, ...parseOrigins(process.env.CLIENT_ORIGINS)]);
+
+const WILDCARD_ORIGINS = [...ALLOWED_ORIGINS]
+  .filter((origin) => origin.includes("*"))
+  .map((origin) => new RegExp(`^${origin.split("*").map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join(".*")}$`));
+
+const isAllowedOrigin = (origin) =>
+  ALLOWED_ORIGINS.has(origin) || WILDCARD_ORIGINS.some((pattern) => pattern.test(origin));
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || ALLOWED_ORIGINS.has(origin)) {
+      // Requests without an Origin header (curl, health checks, server-to-server)
+      // are allowed; browsers always send one for cross-site requests.
+      if (!origin || isAllowedOrigin(origin)) {
         return callback(null, true);
       }
 
